@@ -88,10 +88,14 @@ exports.submitTest = catchAsync(async (req, res, next) => {
 
 // ==================== CREATE A NEW TEST ====================
 exports.createTest = catchAsync(async (req, res, next) => {
+    // console.log("inside create");
+
     const testObj = req.body;
     const key = short.generate();
     testObj.key = key;
     testObj.createdBy = req.user.id;
+
+    // console.log(key);
 
     const newTest = await Test.create(testObj);
     newTest.active = undefined;

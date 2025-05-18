@@ -8,6 +8,8 @@ const sendEmail = require("../utils/email");
 
 // Generate JWT token with user id and secret from env
 const signToken = (id) => {
+    console.log("inside signToken", process.env.JWT_EXPIRES_IN);
+
     return jwt.sign({ id }, process.env.JWT_SECRET_KEY, {
         expiresIn: process.env.JWT_EXPIRES_IN,
     });
@@ -53,6 +55,8 @@ exports.signup = catchAsync(async (req, res, next) => {
 
 // User login controller
 exports.login = catchAsync(async (req, res, next) => {
+    // console.log("inside login");
+
     const { email, password } = req.body;
 
     // Check if email and password provided
@@ -71,8 +75,21 @@ exports.login = catchAsync(async (req, res, next) => {
     createSendtoken(user, 200, "User logged in successfully", res);
 });
 
+function get_decoded(token) {
+    jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
+        if (err) {
+            console.error("Token verification failed:", err.message);
+        } else {
+            console.log("Decoded Token:", decoded);
+            return decoded;
+        }
+    });
+}
+
 // Protect routes middleware - verify JWT token and user
 exports.protect = catchAsync(async (req, res, next) => {
+    // console.log("inside protect");
+
     let token;
 
     // Check for token in Authorization header
@@ -81,23 +98,43 @@ exports.protect = catchAsync(async (req, res, next) => {
         req.headers.authorization.startsWith("Bearer")
     ) {
         token = req.headers.authorization.split(" ")[1];
-    }
-
-    // If no token, user not logged in
-    if (!token) {
+    } else {
         return next(
             new AppError("You are not logged in! Please log in to access", 401)
         );
     }
 
+    // If no token, user not logged in
+    // console.log("tokennnnnnnnnnnn", token);
+
     // Verify token and decode payload
+    // let decoded;
+
+    // try {
+    //     jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
+    //         if (err) {
+    //             console.error("Token verification failed:", err.message);
+    //         } else {
+    //             console.log("Decoded Token:", decoded);
+    //             console.log("userId", decoded.id);
+    //         }
+    //     });
+    // } catch (err) {
+    //     return next(new AppError("Invalid token. Please log in again.", 401));
+    // }
+
+    // decoded = get_decoded(token);
     const decoded = await promisify(jwt.verify)(
         token,
         process.env.JWT_SECRET_KEY
     );
 
     // Check if user still exists
-    const currentUser = await User.findById(decoded.id);
+    // console.log("userId", decoded.id);
+    const userId = decoded.id;
+    const currentUser = await User.findById(userId);
+    // console.log(currentUser);
+
     if (!currentUser) {
         return next(
             new AppError(

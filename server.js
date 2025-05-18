@@ -4,7 +4,6 @@ const dotenv = require("dotenv");
 const app = require("./index");
 
 // Load environment variables from config file
-dotenv.config({ path: "./config.env" });
 dotenv.config();
 
 // Setup MongoDB connection string

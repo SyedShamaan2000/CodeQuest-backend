@@ -18,7 +18,7 @@
         "express-mongo-sanitize": "^2.2.0",
         "express-rate-limit": "^6.7.0",
         "helmet": "^6.0.1",
-        "jsonwebtoken": "^9.0.0",
+        "jsonwebtoken": "^9.0.2",
         "mongodb": "^4.11.0",
         "mongoose": "^6.7.1",
         "mongoose-double": "^0.0.1",
@@ -26,6 +26,7 @@
         "nodemailer": "^6.8.0",
         "nodemon": "^2.0.19",
         "short-uuid": "^4.2.2",
+        "util": "^0.12.5",
         "validator": "^13.7.0",
         "xss-clean": "^0.1.1"
     }
