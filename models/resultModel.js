@@ -20,6 +20,10 @@ const resultSchema = new mongoose.Schema({
         ref: "User",
         required: [true, "Please enter the user ID"],
     },
+    testName: {
+        type: String,
+        required: [true, "Please enter a Test name"],
+    },
     candidate: {
         type: [
             {

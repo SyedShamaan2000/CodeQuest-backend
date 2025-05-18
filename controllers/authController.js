@@ -8,7 +8,7 @@ const sendEmail = require("../utils/email");
 
 // Generate JWT token with user id and secret from env
 const signToken = (id) => {
-    console.log("inside signToken", process.env.JWT_EXPIRES_IN);
+    // console.log("inside signToken", process.env.JWT_EXPIRES_IN);
 
     return jwt.sign({ id }, process.env.JWT_SECRET_KEY, {
         expiresIn: process.env.JWT_EXPIRES_IN,

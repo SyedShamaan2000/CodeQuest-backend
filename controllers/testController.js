@@ -101,6 +101,7 @@ exports.createTest = catchAsync(async (req, res, next) => {
     newTest.active = undefined;
 
     await Result.create({
+        testName: newTest.name,
         testID: newTest._id,
         testKey: key,
         createdBy: req.user.id,
