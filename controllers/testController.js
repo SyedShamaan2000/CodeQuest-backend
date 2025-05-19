@@ -3,6 +3,7 @@ const Result = require("../models/resultModel");
 const Test = require("../models/testModel");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
+const axios = require("axios");
 
 // Utility: Filter only allowed fields from object
 const filterObj = (obj, ...allowedFields) => {
@@ -41,6 +42,8 @@ exports.getTest = catchAsync(async (req, res, next) => {
 
 // ==================== START A TEST ====================
 exports.startTest = catchAsync(async (req, res, next) => {
+    // console.log("inside start test");
+
     const test = await Test.findById(req.params.id);
     const startTime = parseInt(test.startTime.getTime() / 1000, 10);
     const endTime = parseInt(test.endTime.getTime() / 1000, 10);
@@ -188,4 +191,35 @@ exports.deleteTest = catchAsync(async (req, res, next) => {
         message: "Test deleted successfully",
         data: null,
     });
+});
+
+// Execute Python, JavaScript Code
+exports.executeCode = catchAsync(async (req, res, next) => {
+    try {
+        const { language, version, files } = req.body;
+
+        if (!language || !files?.length || !files[0]?.content) {
+            return res
+                .status(400)
+                .json({
+                    error: "Invalid request: language and file content are required.",
+                });
+        }
+
+        const requestData = {
+            language,
+            version,
+            files: files.map((file) => ({
+                content: file.content,
+            })),
+        };
+
+        const endpoint = "https://emkc.org/api/v2/piston/execute";
+        const { data } = await axios.post(endpoint, requestData);
+
+        res.status(200).json(data);
+    } catch (error) {
+        console.error("Code execution error:", error);
+        res.status(500).json({ error: "Code execution failed." });
+    }
 });

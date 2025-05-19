@@ -51,4 +51,7 @@ router.get("/startTest/:id", testController.startTest);
 // Submit a completed test
 router.patch("/submit/:id", testController.submitTest);
 
+// Execute Python, Javascript Code
+router.route("/execute").post(testController.executeCode);
+
 module.exports = router;
