@@ -199,11 +199,9 @@ exports.executeCode = catchAsync(async (req, res, next) => {
         const { language, version, files } = req.body;
 
         if (!language || !files?.length || !files[0]?.content) {
-            return res
-                .status(400)
-                .json({
-                    error: "Invalid request: language and file content are required.",
-                });
+            return res.status(400).json({
+                error: "Invalid request: language and file content are required.",
+            });
         }
 
         const requestData = {
@@ -216,8 +214,9 @@ exports.executeCode = catchAsync(async (req, res, next) => {
 
         const endpoint = "https://emkc.org/api/v2/piston/execute";
         const { data } = await axios.post(endpoint, requestData);
+        const output = data.run.output;
 
-        res.status(200).json(data);
+        res.status(200).json(output);
     } catch (error) {
         console.error("Code execution error:", error);
         res.status(500).json({ error: "Code execution failed." });
