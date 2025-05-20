@@ -37,9 +37,16 @@ const testSchema = mongoose.Schema({
           type: String,
           required: [true, "Please enter constraints for the question"],
         },
-        predefinedStructure: {
+        javascriptPredefinedStructure: {
           type: String,
-          required: [true, "Please enter code structure for execution"],
+          required: [
+            true,
+            "Please enter javascript code structure for execution",
+          ],
+        },
+        pythonPredefinedStructure: {
+          type: String,
+          required: [true, "Please enter python code structure for execution"],
         },
         testcases: {
           type: [
@@ -52,9 +59,13 @@ const testSchema = mongoose.Schema({
                 type: [String],
                 required: [true, "Please enter output for the test case"],
               },
-              testCaseCommand: {
+              javascriptTestCaseCommand: {
                 type: String,
-                required: [true, "Please enter the test command"],
+                required: [true, "Please enter the javascript test command"],
+              },
+              pythonTestCaseCommand: {
+                type: String,
+                required: [true, "Please enter the python test command"],
               },
             },
           ],
