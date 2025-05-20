@@ -61,11 +61,11 @@ const testSchema = mongoose.Schema({
               },
               javascriptTestCaseCommand: {
                 type: String,
-                required: [true, "Please enter the javascript test command"],
+                required: [false, "Please enter the javascript test command"],
               },
               pythonTestCaseCommand: {
                 type: String,
-                required: [true, "Please enter the python test command"],
+                required: [false, "Please enter the python test command"],
               },
             },
           ],
