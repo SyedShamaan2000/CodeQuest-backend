@@ -191,29 +191,143 @@ exports.deleteTest = catchAsync(async (req, res, next) => {
 });
 
 // Execute Python, JavaScript Code
-exports.executeCode = catchAsync(async (req, res, next) => {
+// exports.executeCode = catchAsync(async (req, res, next) => {
+//   console.log("inside executer");
+//   try {
+//     const { language, version, files, input, expectedOutput } = req.body;
+
+//     if (!language || !files?.length || !files[0]?.content) {
+//       return res.status(400).json({
+//         error: "Invalid request: language and file content are required.",
+//       });
+//     }
+
+//     console.log(input, expectedOutput);
+
+//     console.log("type of input", typeof input);
+//     console.log("add", input + expectedOutput);
+
+//     const requestData = {
+//       language,
+//       version,
+//       files: files.map((file) => ({
+//         content: `${file.content} + \n console.log(solve())`,
+//       })),
+//     };
+
+//     const endpoint = "https://emkc.org/api/v2/piston/execute";
+//     const { data } = await axios.post(endpoint, requestData);
+//     let userOutput = data.run.output;
+
+//     userOutput = userOutput.split("[ ")[1].split(" ]")[0];
+//     console.log("userOutput", userOutput);
+
+//     if (userOutput === expectedOutput) {
+//       console.log("Test Case Passed");
+//     } else {
+//       console.log("Test Case Failed");
+//     }
+
+//     res.status(200).json(userOutput);
+//   } catch (error) {
+//     console.error("Code execution error:", error);
+//     res.status(500).json({ error: "Code execution failed." });
+//   }
+// });
+
+// exports.executeCode = catchAsync(async (req, res, next) => {
+//   console.log("inside executer");
+//   try {
+//     let { language, version, files, input, expectedOutput } = req.body;
+
+//     if (!language || !files?.length || !files[0]?.content) {
+//       return res.status(400).json({
+//         error: "Invalid request: language and file content are required.",
+//       });
+//     }
+
+//     expectedOutput = expectedOutput.replace(/"/g, "");
+
+//     input = input.replace(/"/g, "");
+
+//     // console.log(input);
+//     // console.log(expectedOutput);
+
+//     const requestData = {
+//       language,
+//       version,
+//       files: files.map((file) => ({
+//         content: `${file.content} \n console.log(solve('${input}'))`,
+//       })),
+//     };
+
+//     const endpoint = "https://emkc.org/api/v2/piston/execute ";
+//     const { data } = await axios.post(endpoint, requestData);
+//     let userOutput = data.run.output;
+//     // console.log("before", userOutput);
+//     // userOutput = userOutput.split("[ ")[1].split(" ]")[0];
+//     // userOutput = userOutput.replace(/"/g, "");
+
+//     // console.log("userOutput", userOutput);
+
+//     expectedOutput = String(expectedOutput);
+//     userOutput = String(userOutput);
+
+//     if(userOutput === expectedOutput) {
+//       const responseMessage = "Test Case Passed"
+//     } else {
+//       const responseMessage = "Test Case Failed"
+//     }
+
+//     res.status(200).json({
+//       userOutput,
+//       expectedOutput,
+//       result: responseMessage,
+//     });
+//   } catch (error) {
+//     console.error("Code execution error:", error);
+//     res.status(500).json({ error: "Code execution failed." });
+//   }
+// });
+
+exports.executeCode = catchAsync(async (req, res) => {
+  // console.log("Inside executeCode");
+
+  const { language, version, files, input, expectedOutput } = req.body;
+
+  if (!language || !files?.length || !files[0]?.content) {
+    return res.status(400).json({
+      error: "Invalid request: language and file content are required.",
+    });
+  }
+
+  const requestData = {
+    language,
+    version,
+    files: files.map((file) => ({
+      content: `${file.content}\nconsole.log(solve('${input.replace(
+        /"/g,
+        ""
+      )}'))`,
+    })),
+  };
+
+  const endpoint = "https://emkc.org/api/v2/piston/execute ";
+
   try {
-    const { language, version, files } = req.body;
-
-    if (!language || !files?.length || !files[0]?.content) {
-      return res.status(400).json({
-        error: "Invalid request: language and file content are required.",
-      });
-    }
-
-    const requestData = {
-      language,
-      version,
-      files: files.map((file) => ({
-        content: file.content,
-      })),
-    };
-
-    const endpoint = "https://emkc.org/api/v2/piston/execute";
     const { data } = await axios.post(endpoint, requestData);
-    const output = data.run.output;
+    let userOutput = data.run.output.trim();
 
-    res.status(200).json(output);
+    const responseMessage =
+      userOutput === expectedOutput ? "Test Case Passed" : "Test Case Failed";
+
+    console.log(responseMessage);
+
+    res.status(200).json({
+      userOutput,
+      expectedOutput,
+      result: responseMessage,
+    });
   } catch (error) {
     console.error("Code execution error:", error);
     res.status(500).json({ error: "Code execution failed." });
