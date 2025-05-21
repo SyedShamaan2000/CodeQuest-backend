@@ -7,329 +7,309 @@ const axios = require("axios");
 
 // Utility: Filter only allowed fields from object
 const filterObj = (obj, ...allowedFields) => {
-  const newObj = {};
-  Object.keys(obj).forEach((el) => {
-    if (allowedFields.includes(el)) {
-      newObj[el] = el === "score" ? parseFloat(obj[el]) : obj[el];
-    }
-  });
-  return newObj;
+    const newObj = {};
+    Object.keys(obj).forEach((el) => {
+        if (allowedFields.includes(el)) {
+            newObj[el] = el === "score" ? parseFloat(obj[el]) : obj[el];
+        }
+    });
+    return newObj;
 };
 
 // ==================== GET ALL TESTS ====================
 exports.getAllTests = catchAsync(async (req, res, next) => {
-  const tests = await Test.find();
+    const tests = await Test.find();
 
-  res.status(200).json({
-    status: "success",
-    message: "All tests found",
-    results: tests.length,
-    data: { tests },
-  });
+    res.status(200).json({
+        status: "success",
+        message: "All tests found",
+        results: tests.length,
+        data: { tests },
+    });
 });
 
 // ==================== GET A SINGLE TEST ====================
 exports.getTest = catchAsync(async (req, res, next) => {
-  const test = await Test.findById(req.params.id);
-  if (!test) return next(new AppError("No test found with that ID", 404));
+    const test = await Test.findById(req.params.id);
+    if (!test) return next(new AppError("No test found with that ID", 404));
 
-  res.status(200).json({
-    status: "success",
-    message: "Test found",
-    data: { test },
-  });
+    res.status(200).json({
+        status: "success",
+        message: "Test found",
+        data: { test },
+    });
 });
 
 // ==================== START A TEST ====================
 exports.startTest = catchAsync(async (req, res, next) => {
-  // console.log("inside start test");
+    // console.log("inside start test");
 
-  const test = await Test.findById(req.params.id);
-  const startTime = parseInt(test.startTime.getTime() / 1000, 10);
-  const endTime = parseInt(test.endTime.getTime() / 1000, 10);
-  const currentTime = parseInt(Date.now() / 1000, 10);
+    const test = await Test.findById(req.params.id);
+    const startTime = parseInt(test.startTime.getTime() / 1000, 10);
+    const endTime = parseInt(test.endTime.getTime() / 1000, 10);
+    const currentTime = parseInt(Date.now() / 1000, 10);
 
-  if (currentTime < startTime || currentTime >= endTime) {
-    const message = "Test Link Deactivated";
-    return res.status(400).json({ status: "fail", message });
-  }
+    if (currentTime < startTime || currentTime >= endTime) {
+        const message = "Test Link Deactivated";
+        return res.status(400).json({ status: "fail", message });
+    }
 
-  res.status(200).json({
-    status: "success",
-    message: "Test started successfully",
-    data: { test },
-  });
+    res.status(200).json({
+        status: "success",
+        message: "Test started successfully",
+        data: { test },
+    });
 });
 
 // ==================== SUBMIT A TEST ====================
 exports.submitTest = catchAsync(async (req, res, next) => {
-  const candidateData = filterObj(req.body, "name", "email", "score");
+    const candidateData = filterObj(req.body, "name", "email", "score");
 
-  const existing = await Result.findOne({
-    testID: req.params.id,
-    "candidate.email": candidateData.email,
-  });
+    const existing = await Result.findOne({
+        testID: req.params.id,
+        "candidate.email": candidateData.email,
+    });
 
-  if (existing) {
-    return next(new AppError("You have already submitted the test", 400));
-  }
+    if (existing) {
+        return next(new AppError("You have already submitted the test", 400));
+    }
 
-  const result = await Result.updateOne(
-    { testID: req.params.id },
-    { $push: { candidate: candidateData } }
-  );
+    const result = await Result.updateOne(
+        { testID: req.params.id },
+        { $push: { candidate: candidateData } }
+    );
 
-  res.status(200).json({
-    status: "success",
-    message: "Result added successfully",
-    data: { result },
-  });
+    res.status(200).json({
+        status: "success",
+        message: "Result added successfully",
+        data: { result },
+    });
 });
 
 // ==================== CREATE A NEW TEST ====================
 exports.createTest = catchAsync(async (req, res, next) => {
-  // console.log("inside create");
+    // console.log("inside create");
 
-  const testObj = req.body;
-  const key = short.generate();
-  testObj.key = key;
-  testObj.createdBy = req.user.id;
+    const testObj = req.body;
+    const key = short.generate();
+    testObj.key = key;
+    testObj.createdBy = req.user.id;
 
-  // console.log(key);
+    // console.log(key);
 
-  const newTest = await Test.create(testObj);
-  newTest.active = undefined;
+    const newTest = await Test.create(testObj);
+    newTest.active = undefined;
 
-  await Result.create({
-    testName: newTest.name,
-    testID: newTest._id,
-    testKey: key,
-    createdBy: req.user.id,
-  });
+    await Result.create({
+        testName: newTest.name,
+        testID: newTest._id,
+        testKey: key,
+        createdBy: req.user.id,
+    });
 
-  res.status(201).json({
-    status: "success",
-    message: "Test created successfully",
-    data: { test: newTest },
-  });
+    res.status(201).json({
+        status: "success",
+        message: "Test created successfully",
+        data: { test: newTest },
+    });
 });
 
 // ==================== UPDATE MY OWN TEST ====================
 exports.updateMyTest = catchAsync(async (req, res, next) => {
-  const test = await Test.findById(req.params.testID);
-  if (!test) return next(new AppError("No test found with that ID", 400));
-  if (test.createdBy !== req.user.id) {
-    return next(new AppError("You do not have permission", 403));
-  }
+    const test = await Test.findById(req.params.testID);
+    if (!test) return next(new AppError("No test found with that ID", 400));
+    if (test.createdBy !== req.user.id) {
+        return next(new AppError("You do not have permission", 403));
+    }
 
-  const filteredBody = filterObj(
-    req.body,
-    "name",
-    "email",
-    "company",
-    "Question",
-    "duration"
-  );
+    const filteredBody = filterObj(
+        req.body,
+        "name",
+        "email",
+        "company",
+        "Question",
+        "duration"
+    );
 
-  const updatedTest = await Test.findByIdAndUpdate(test._id, filteredBody, {
-    new: true,
-    runValidators: true,
-  });
-  updatedTest.active = undefined;
+    const updatedTest = await Test.findByIdAndUpdate(test._id, filteredBody, {
+        new: true,
+        runValidators: true,
+    });
+    updatedTest.active = undefined;
 
-  res.status(200).json({
-    status: "success",
-    message: "Test updated successfully",
-    data: { test: updatedTest },
-  });
+    res.status(200).json({
+        status: "success",
+        message: "Test updated successfully",
+        data: { test: updatedTest },
+    });
 });
 
 // ==================== UPDATE ANY TEST (ADMIN ONLY) ====================
 exports.updateTest = catchAsync(async (req, res, next) => {
-  const test = await Test.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  });
-  if (!test) return next(new AppError("No test found with that ID", 404));
+    const test = await Test.findByIdAndUpdate(req.params.id, req.body, {
+        new: true,
+        runValidators: true,
+    });
+    if (!test) return next(new AppError("No test found with that ID", 404));
 
-  test.active = undefined;
+    test.active = undefined;
 
-  res.status(200).json({
-    status: "success",
-    message: "Test updated successfully",
-    data: { test },
-  });
+    res.status(200).json({
+        status: "success",
+        message: "Test updated successfully",
+        data: { test },
+    });
 });
 
 // ==================== DELETE MY OWN TEST ====================
 exports.deleteMyTest = catchAsync(async (req, res, next) => {
-  const test = await Test.findById(req.params.testID);
-  if (!test) return next(new AppError("No test found with that ID", 400));
-  if (test.createdBy !== req.user.id) {
-    return next(new AppError("You do not have permission", 403));
-  }
+    const test = await Test.findById(req.params.testID);
+    if (!test) return next(new AppError("No test found with that ID", 400));
+    if (test.createdBy !== req.user.id) {
+        return next(new AppError("You do not have permission", 403));
+    }
 
-  await Test.findByIdAndUpdate(test._id, { active: false });
+    await Test.findByIdAndUpdate(test._id, { active: false });
 
-  res.status(204).json({
-    status: "success",
-    message: "Test deleted successfully",
-    data: null,
-  });
+    res.status(204).json({
+        status: "success",
+        message: "Test deleted successfully",
+        data: null,
+    });
 });
 
 // ==================== DELETE ANY TEST (ADMIN ONLY) ====================
 exports.deleteTest = catchAsync(async (req, res, next) => {
-  const test = await Test.findByIdAndDelete(req.params.id);
-  if (!test) return next(new AppError("No test found with that ID", 404));
-
-  res.status(200).json({
-    status: "success",
-    message: "Test deleted successfully",
-    data: null,
-  });
-});
-
-// Execute Python, JavaScript Code
-// exports.executeCode = catchAsync(async (req, res, next) => {
-//   console.log("inside executer");
-//   try {
-//     const { language, version, files, input, expectedOutput } = req.body;
-
-//     if (!language || !files?.length || !files[0]?.content) {
-//       return res.status(400).json({
-//         error: "Invalid request: language and file content are required.",
-//       });
-//     }
-
-//     console.log(input, expectedOutput);
-
-//     console.log("type of input", typeof input);
-//     console.log("add", input + expectedOutput);
-
-//     const requestData = {
-//       language,
-//       version,
-//       files: files.map((file) => ({
-//         content: `${file.content} + \n console.log(solve())`,
-//       })),
-//     };
-
-//     const endpoint = "https://emkc.org/api/v2/piston/execute";
-//     const { data } = await axios.post(endpoint, requestData);
-//     let userOutput = data.run.output;
-
-//     userOutput = userOutput.split("[ ")[1].split(" ]")[0];
-//     console.log("userOutput", userOutput);
-
-//     if (userOutput === expectedOutput) {
-//       console.log("Test Case Passed");
-//     } else {
-//       console.log("Test Case Failed");
-//     }
-
-//     res.status(200).json(userOutput);
-//   } catch (error) {
-//     console.error("Code execution error:", error);
-//     res.status(500).json({ error: "Code execution failed." });
-//   }
-// });
-
-// exports.executeCode = catchAsync(async (req, res, next) => {
-//   console.log("inside executer");
-//   try {
-//     let { language, version, files, input, expectedOutput } = req.body;
-
-//     if (!language || !files?.length || !files[0]?.content) {
-//       return res.status(400).json({
-//         error: "Invalid request: language and file content are required.",
-//       });
-//     }
-
-//     expectedOutput = expectedOutput.replace(/"/g, "");
-
-//     input = input.replace(/"/g, "");
-
-//     // console.log(input);
-//     // console.log(expectedOutput);
-
-//     const requestData = {
-//       language,
-//       version,
-//       files: files.map((file) => ({
-//         content: `${file.content} \n console.log(solve('${input}'))`,
-//       })),
-//     };
-
-//     const endpoint = "https://emkc.org/api/v2/piston/execute ";
-//     const { data } = await axios.post(endpoint, requestData);
-//     let userOutput = data.run.output;
-//     // console.log("before", userOutput);
-//     // userOutput = userOutput.split("[ ")[1].split(" ]")[0];
-//     // userOutput = userOutput.replace(/"/g, "");
-
-//     // console.log("userOutput", userOutput);
-
-//     expectedOutput = String(expectedOutput);
-//     userOutput = String(userOutput);
-
-//     if(userOutput === expectedOutput) {
-//       const responseMessage = "Test Case Passed"
-//     } else {
-//       const responseMessage = "Test Case Failed"
-//     }
-
-//     res.status(200).json({
-//       userOutput,
-//       expectedOutput,
-//       result: responseMessage,
-//     });
-//   } catch (error) {
-//     console.error("Code execution error:", error);
-//     res.status(500).json({ error: "Code execution failed." });
-//   }
-// });
-
-exports.executeCode = catchAsync(async (req, res) => {
-  // console.log("Inside executeCode");
-
-  const { language, version, files, input, expectedOutput } = req.body;
-
-  if (!language || !files?.length || !files[0]?.content) {
-    return res.status(400).json({
-      error: "Invalid request: language and file content are required.",
-    });
-  }
-
-  const requestData = {
-    language,
-    version,
-    files: files.map((file) => ({
-      content: `${file.content}\nconsole.log(solve('${input.replace(
-        /"/g,
-        ""
-      )}'))`,
-    })),
-  };
-
-  const endpoint = "https://emkc.org/api/v2/piston/execute ";
-
-  try {
-    const { data } = await axios.post(endpoint, requestData);
-    let userOutput = data.run.output.trim();
-
-    const responseMessage =
-      userOutput === expectedOutput ? "Test Case Passed" : "Test Case Failed";
-
-    console.log(responseMessage);
+    const test = await Test.findByIdAndDelete(req.params.id);
+    if (!test) return next(new AppError("No test found with that ID", 404));
 
     res.status(200).json({
-      userOutput,
-      expectedOutput,
-      result: responseMessage,
+        status: "success",
+        message: "Test deleted successfully",
+        data: null,
     });
-  } catch (error) {
-    console.error("Code execution error:", error);
-    res.status(500).json({ error: "Code execution failed." });
-  }
+});
+
+exports.executeCode = catchAsync(async (req, res) => {
+    // console.log("Inside executeCode");
+
+    const { language, version, files } = req.body;
+
+    if (!language || !files?.length || !files[0]?.content) {
+        return res.status(400).json({
+            error: "Invalid request: language and file content are required.",
+        });
+    }
+
+    const requestData = {
+        language,
+        version,
+        files: files.map((file) => ({
+            content: `${file.content}`,
+        })),
+    };
+
+    const endpoint = "https://emkc.org/api/v2/piston/execute ";
+
+    try {
+        const { data } = await axios.post(endpoint, requestData);
+        let userOutput = data.run.output;
+        // console.log("userOutput", userOutput);
+
+        res.status(200).json({
+            userOutput,
+        });
+    } catch (error) {
+        console.error("Code execution error:", error);
+        res.status(500).json({ error: "Code execution failed." });
+    }
+});
+
+const testCaseResults = {};
+
+exports.runTestCase = async (req, res) => {
+    const {
+        language,
+        version,
+        files,
+        input,
+        expectedOutput,
+        questionId,
+        testCaseId,
+    } = req.body;
+
+    if (!language || !files?.length || !files[0]?.content) {
+        return res.status(400).json({
+            error: "Invalid request: language and file content are required.",
+        });
+    }
+
+    console.log("testcase idddddddddd", testCaseId);
+
+    const requestData = {
+        language,
+        version,
+        files: files.map((file) => ({
+            content: `${file.content}\n
+            function runTestcase() {
+                if(sum(${input}) == (${expectedOutput})) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+            console.log(runTestcase());
+            `,
+        })),
+    };
+
+    const endpoint = "https://emkc.org/api/v2/piston/execute ";
+
+    try {
+        const { data } = await axios.post(endpoint, requestData);
+        let userOutput = data.run.output.trim();
+
+        // Ensure the testCaseResults object has an array for this questionId
+        if (!testCaseResults[questionId]) {
+            testCaseResults[questionId] = [];
+        }
+
+        // Push the result of this test case into the array
+        testCaseResults[questionId].push({
+            testCaseId,
+            result: userOutput === "1",
+        });
+
+        console.log(testCaseResults);
+
+        res.status(200).json({
+            result:
+                userOutput === "1" ? "Test Case Passed" : "Test Case Failed",
+        });
+    } catch (error) {
+        console.error("Code execution error:", error);
+        res.status(500).json({ error: "Code execution failed." });
+    }
+};
+
+exports.getTestCaseResults = catchAsync(async (req, res) => {
+    const { questionId } = req.body;
+
+    if (!testCaseResults[questionId]) {
+        return res.status(404).json({
+            error: "No test cases found for this questionId.",
+        });
+    }
+
+    const results = testCaseResults[questionId];
+    const passedCount = results.filter((result) => result).length;
+    const failedCount = results.length - passedCount;
+
+    res.status(200).json({
+        passedCount,
+        failedCount,
+    });
+
+    // Optionally, clear the results after sending them
+    delete testCaseResults[questionId];
 });
